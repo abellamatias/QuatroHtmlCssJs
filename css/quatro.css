@@ -941,8 +941,29 @@ h3 {
   left: -14px;
   width: calc(100% + 28px);
   height: calc(100% + 24px);
+  max-width: none;
+  pointer-events: none;
+  overflow: visible;
   color: var(--chocolate);
   z-index: 1;
+}
+
+/* Envoltura para precios destacados con círculo manuscrito */
+.precio-circulo-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 4px 0;
+}
+
+.precio-circulo-wrap .garabato-circulo {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% + 50px);
+  height: calc(100% + 26px);
 }
 
 .garabato-tachado {
