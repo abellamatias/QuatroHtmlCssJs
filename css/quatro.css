@@ -200,6 +200,19 @@ h3 {
   padding-top: var(--e5);
 }
 
+.hero-visual {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (max-width: 959px) {
+  .hero-visual {
+    display: none !important;
+  }
+}
+
 @media (min-width: 960px) {
   .grilla-hero {
     grid-template-columns: 1.15fr 0.85fr;
