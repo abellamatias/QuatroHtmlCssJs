@@ -126,26 +126,40 @@
 
       window.addEventListener('scroll', onScroll, { passive: true });
 
-      // Click suave en Nuestra Historia
-      itemHistoria.addEventListener('click', (e) => {
-        e.preventDefault();
+      function calcularOffsetNav() {
+        const cabecera = document.querySelector('.cabecera');
+        const navHeight = cabecera ? cabecera.offsetHeight : 72;
+        return navHeight + 36; // Margen generoso para que el nav no tape ni quede pegado al título
+      }
+
+      function scrollAHistoria() {
         activeItem = itemHistoria;
         moverPastilla(itemHistoria);
-        const navOffset = 80;
-        const targetY = historiaSection.getBoundingClientRect().top + window.pageYOffset - navOffset;
+        const navOffset = calcularOffsetNav();
+        const targetY = Math.max(0, historiaSection.getBoundingClientRect().top + window.pageYOffset - navOffset);
         window.scrollTo({ top: targetY, behavior: scrollBehavior });
         history.pushState(null, '', '#nuestra-historia');
-      });
+      }
 
-      // Click suave en Inicio
-      itemInicio.addEventListener('click', (e) => {
-        e.preventDefault();
+      function scrollAInicio() {
         activeItem = itemInicio;
         moverPastilla(itemInicio);
         window.scrollTo({ top: 0, behavior: scrollBehavior });
         if (window.location.hash) {
           history.pushState(null, '', window.location.pathname);
         }
+      }
+
+      // Click suave en Nuestra Historia
+      itemHistoria.addEventListener('click', (e) => {
+        e.preventDefault();
+        scrollAHistoria();
+      });
+
+      // Click suave en Inicio
+      itemInicio.addEventListener('click', (e) => {
+        e.preventDefault();
+        scrollAInicio();
       });
     }
 
@@ -211,6 +225,52 @@
         cerrarMenu();
       });
     });
+
+    // Navegación suave dentro del menú móvil (especialmente en index.html)
+    const paginaActual = document.body.getAttribute('data-pagina') || 'inicio';
+    const historiaSection = document.getElementById('nuestra-historia');
+    const mobileLinkHistoria = menuMovil.querySelector('a[href$="#nuestra-historia"]');
+    const mobileLinkInicio = menuMovil.querySelector('a[href="index.html"], a[href="#inicio"]');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const scrollBehavior = prefersReducedMotion ? 'auto' : 'smooth';
+
+    if (paginaActual === 'inicio') {
+      if (mobileLinkHistoria && historiaSection) {
+        mobileLinkHistoria.addEventListener('click', (e) => {
+          e.preventDefault();
+          cerrarMenu();
+          const cabecera = document.querySelector('.cabecera');
+          const navHeight = cabecera ? cabecera.offsetHeight : 72;
+          const extraOffset = 36;
+          const targetY = Math.max(0, historiaSection.getBoundingClientRect().top + window.pageYOffset - (navHeight + extraOffset));
+          window.scrollTo({ top: targetY, behavior: scrollBehavior });
+          history.pushState(null, '', '#nuestra-historia');
+        });
+      }
+
+      if (mobileLinkInicio) {
+        mobileLinkInicio.addEventListener('click', (e) => {
+          e.preventDefault();
+          cerrarMenu();
+          window.scrollTo({ top: 0, behavior: scrollBehavior });
+          if (window.location.hash) {
+            history.pushState(null, '', window.location.pathname);
+          }
+        });
+      }
+
+      const marcaLogo = document.querySelector('.marca');
+      if (marcaLogo) {
+        marcaLogo.addEventListener('click', (e) => {
+          e.preventDefault();
+          cerrarMenu();
+          window.scrollTo({ top: 0, behavior: scrollBehavior });
+          if (window.location.hash) {
+            history.pushState(null, '', window.location.pathname);
+          }
+        });
+      }
+    }
 
     // Cerrar si redimensiona a escritorio
     window.addEventListener('resize', () => {
@@ -439,6 +499,22 @@
           if (anim) anim.destroy();
         } catch (e) {}
       }, 400);
+
+      // Si se cargó con hash en la URL (ej: #nuestra-historia), alinear con margen de cabecera
+      if (window.location.hash) {
+        setTimeout(() => {
+          try {
+            const targetEl = document.querySelector(window.location.hash);
+            if (targetEl) {
+              const cabecera = document.querySelector('.cabecera');
+              const navHeight = cabecera ? cabecera.offsetHeight : 72;
+              const extraOffset = 36;
+              const targetY = Math.max(0, targetEl.getBoundingClientRect().top + window.pageYOffset - (navHeight + extraOffset));
+              window.scrollTo({ top: targetY, behavior: 'smooth' });
+            }
+          } catch (e) {}
+        }, 150);
+      }
     }
 
     // Comprobador de ciclo:
