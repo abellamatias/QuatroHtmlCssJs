@@ -440,6 +440,39 @@ h3 {
   gap: 12px;
 }
 
+.cabecera-acciones .btn-nav-wa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cabecera-acciones .btn-nav-wa svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+@media (max-width: 959px) {
+  .cabecera-acciones .btn-nav-wa {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    gap: 0;
+  }
+
+  .cabecera-acciones .btn-nav-wa span {
+    display: none;
+  }
+
+  .cabecera-acciones .btn-nav-wa svg {
+    width: 22px;
+    height: 22px;
+    margin: auto;
+  }
+}
+
 .btn-menu-movil {
   display: flex;
   align-items: center;
@@ -633,8 +666,6 @@ h3 {
 .btn-flotante-wa svg {
   display: block;
   flex-shrink: 0;
-  /* Centrado óptico exacto del cuerpo de la burbuja */
-  transform: translate(-0.6px, -0.6px);
 }
 
 .btn-flotante-wa:hover {
