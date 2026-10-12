@@ -102,20 +102,27 @@
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const scrollBehavior = prefersReducedMotion ? 'auto' : 'smooth';
 
+      const mobileLinkHistoria = document.querySelector('#menuMovil a[href$="#nuestra-historia"]');
+      const mobileLinkInicio = document.querySelector('#menuMovil a[href="index.html"], #menuMovil a[href="#inicio"]');
+
       function onScroll() {
         if (hoveredItem) return;
         const historiaRect = historiaSection.getBoundingClientRect();
         const preguntasRect = preguntasSection ? preguntasSection.getBoundingClientRect() : null;
         const mitadPantalla = window.innerHeight * 0.5;
 
-        let nuevoItem = itemInicio;
+        // Mientras no esté sobre la sección de nuestra historia (arriba o abajo), marcar 'inicio'
+        const enHistoria = (historiaRect.top <= mitadPantalla) && (!preguntasRect || preguntasRect.top > mitadPantalla);
+        const nuevoItem = enHistoria ? itemHistoria : itemInicio;
 
-        if (preguntasRect && preguntasRect.top <= mitadPantalla) {
-          nuevoItem = null; // Se oculta pasando la historia
-        } else if (historiaRect.top <= mitadPantalla) {
-          nuevoItem = itemHistoria;
-        } else {
-          nuevoItem = itemInicio;
+        if (mobileLinkHistoria && mobileLinkInicio) {
+          if (enHistoria) {
+            mobileLinkHistoria.classList.add('activo');
+            mobileLinkInicio.classList.remove('activo');
+          } else {
+            mobileLinkInicio.classList.add('activo');
+            mobileLinkHistoria.classList.remove('activo');
+          }
         }
 
         if (activeItem !== nuevoItem) {
@@ -125,6 +132,7 @@
       }
 
       window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
 
       function calcularOffsetNav() {
         const cabecera = document.querySelector('.cabecera');
