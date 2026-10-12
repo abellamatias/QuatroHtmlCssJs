@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es" class="sin-js">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brownies caseros, Quatro</title>
+  <meta name="description" content="Brownies de cacao 70% con centro húmedo y nueces. Cajas de 4, 8 y 16. Pedí por WhatsApp." />
+  <link rel="icon" type="image/png" href="logo.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/quatro.css" />
+  <script src="js/lottie.min.js"></script>
+  <script src="js/dotlottie-helper.js"></script>
+  <script src="js/gatito-data.js"></script>
+  <noscript>
+    <style>
+      .pantalla-carga { display: none !important; }
+    </style>
+  </noscript>
+  <script src="js/quatro.js" defer></script>
+</head>
+<body data-pagina="brownies">
+
+  <!-- Pantalla de carga con Gatito Lottie -->
+  <div id="pantalla-carga" class="pantalla-carga" aria-hidden="true">
+    <div id="lottie-cookie" class="pantalla-carga-lottie"></div>
+    <span class="pantalla-carga-texto">Horneando cosas ricas...</span>
+  </div>
+  <script>
+    (function () {
+      try {
+        var cont = document.getElementById('lottie-cookie');
+        if (!cont || typeof lottie === 'undefined') return;
+
+        function iniciar(data) {
+          if (!data || window.__quatroLoaderAnim) return;
+          window.__quatroLoaderAnim = lottie.loadAnimation({
+            container: cont,
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            animationData: data
+          });
+          window.__quatroLoaderStart = performance.now();
+        }
+
+        var syncData = window.getGatitoAnimationDataSync ? window.getGatitoAnimationDataSync() : (window.QUATRO_LOTTIE_DATA || null);
+        if (syncData) {
+          iniciar(syncData);
+        } else if (window.getGatitoAnimationData) {
+          window.getGatitoAnimationData().then(iniciar).catch(function () {
+            if (window.QUATRO_LOTTIE_DATA) iniciar(window.QUATRO_LOTTIE_DATA);
+          });
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Partículas ambientales de fondo -->
+  <canvas id="ambient-particles" class="particulas-fondo" aria-hidden="true"></canvas>
+
+  <!-- Enlace accesible de salto -->
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+
+  <!-- Cabecera -->
+  <header class="cabecera">
+    <div class="contenedor cabecera-inner">
+      <a class="marca" href="index.html" aria-label="Quatro, inicio">
+        <img class="marca-logo" src="logo.png" alt="Logo de Quatro" width="38" height="38" />
+        <span class="marca-nombre">Quatro</span>
+      </a>
+
+      <nav class="nav-escritorio" id="navEscritorio" aria-label="Principal">
+        <div class="nav-pastilla" id="navPastilla"></div>
+
+        <a class="nav-item" href="index.html" data-nav="inicio">Inicio</a>
+
+        <div class="desplegable-contenedor" data-nav="productos" id="desplegableContenedor">
+          <button type="button" class="nav-item activo" id="botonDesplegable" aria-expanded="false" aria-controls="menuProductos">
+            <span>Productos</span>
+            <svg class="icono-chevron" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          <div class="desplegable-menu" id="menuProductos" role="region" aria-label="Submenú de productos">
+            <a class="desplegable-enlace" href="brownies.html" style="background-color: var(--brote);">
+              <svg class="garabato-hoja" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true" focusable="false" style="width: 22px; height: 22px;">
+                <path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/>
+              </svg>
+              <div>
+                <h4>Brownies</h4>
+                <span>Chocolate en serio</span>
+              </div>
+            </a>
+            <a class="desplegable-enlace" href="pastafrolas.html">
+              <svg class="garabato-estrella" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" style="width: 20px; height: 20px;">
+                <path d="M12 2 L14.6 9 L22 9.3 L16.2 14 L18.3 21.5 L12 17.2 L5.7 21.5 L7.8 14 L2 9.3 L9.4 9 Z"/>
+              </svg>
+              <div>
+                <h4>Pastafrolas</h4>
+                <span>Como las de la abuela</span>
+              </div>
+            </a>
+            <a class="desplegable-enlace" href="alfajores.html">
+              <svg class="garabato-hoja" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true" focusable="false" style="width: 22px; height: 22px; color: var(--chocolate);">
+                <path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/>
+              </svg>
+              <div>
+                <h4>Alfajores</h4>
+                <span>Con dulce de leche de más</span>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <a class="nav-item" href="index.html#nuestra-historia" data-nav="historia">Nuestra historia</a>
+      </nav>
+
+      <div class="cabecera-acciones">
+        <a class="btn btn-primario btn-sm" href="https://wa.me/5493434685501?text=Hola%20Quatro!%20Quiero%20pedir%20brownies." target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false">
+            <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.16 12.04 20.16C10.66 20.16 9.3 19.8 8.1 19.09L7.81 18.92L4.69 19.74L5.52 16.7L5.33 16.39C4.55 15.14 4.14 13.7 4.14 12.22C4.14 7.68 7.84 3.67 12.05 3.67ZM8.84 7.37C8.64 7.37 8.32 7.45 8.05 7.74C7.78 8.04 7.02 8.75 7.02 10.2C7.02 11.65 8.08 13.05 8.23 13.25C8.38 13.45 10.32 16.45 13.29 17.73C14 18.04 14.56 18.23 14.99 18.37C15.71 18.6 16.37 18.57 16.89 18.49C17.47 18.4 18.68 17.75 18.93 17.04C19.18 16.33 19.18 15.72 19.11 15.6C19.04 15.47 18.84 15.4 18.54 15.25C18.24 15.1 16.77 14.37 16.5 14.27C16.23 14.17 16.03 14.12 15.83 14.42C15.63 14.72 15.06 15.4 14.88 15.6C14.71 15.8 14.53 15.82 14.23 15.67C13.93 15.52 12.97 15.21 11.83 14.19C10.94 13.4 10.34 12.42 10.17 12.12C10 11.82 10.15 11.66 10.3 11.51C10.44 11.37 10.61 11.15 10.76 10.97C10.91 10.79 10.96 10.67 11.06 10.47C11.16 10.27 11.11 10.1 11.04 9.95C10.96 9.8 10.39 8.4 10.15 7.82C9.92 7.26 9.68 7.34 9.5 7.33C9.33 7.32 9.13 7.37 8.84 7.37Z"/>
+          </svg>
+          <span>Pedir por WhatsApp</span>
+        </a>
+
+        <button type="button" class="btn-menu-movil" id="botonMenu" aria-label="Abrir menú" aria-expanded="false" aria-controls="menuMovil">
+          <svg id="iconoMenu" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="menu-movil" id="menuMovil" hidden>
+      <a class="menu-movil-enlace" href="index.html">Inicio</a>
+      <div>
+        <button type="button" class="menu-movil-enlace activo" id="botonProductosMovil" aria-expanded="true" aria-controls="menuMovilProductos" style="width: 100%; border: none; background: transparent; cursor: pointer; text-align: left;">
+          <span>Productos</span>
+          <svg id="chevronMovil" viewBox="0 0 20 20" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false" style="transform: rotate(180deg);">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        <div class="menu-movil-acordeon" id="menuMovilProductos">
+          <a class="menu-movil-enlace activo" href="brownies.html">Brownies (Chocolate)</a>
+          <a class="menu-movil-enlace" href="pastafrolas.html">Pastafrolas</a>
+          <a class="menu-movil-enlace" href="alfajores.html">Alfajores XXL</a>
+        </div>
+      </div>
+      <a class="menu-movil-enlace" href="index.html#nuestra-historia">Nuestra historia</a>
+    </div>
+  </header>
+
+  <main id="contenido">
+
+    <!-- Sección A: Hero Brownies -->
+    <section class="seccion" aria-labelledby="titulo-brownies">
+      <div class="contenedor grilla-hero">
+        <div>
+          <h1 id="titulo-brownies">Brownies de chocolate en serio</h1>
+          <svg class="garabato garabato-subrayado dibujar" viewBox="0 0 200 12" aria-hidden="true" focusable="false" style="--demora: 200ms;">
+            <path pathLength="1" d="M2 8 C 30 2, 50 12, 80 6 S 140 2, 198 7"/>
+          </svg>
+
+          <p class="seccion-intro">
+            Arriba, esa costrita brillante que cruje. Adentro, húmedo y denso. Con nueces tostadas y sal patagónica, como tiene que ser.
+          </p>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 16px; margin: var(--e4) 0 var(--e5); font-size: var(--fs-chico); font-weight: 650; color: var(--navy);">
+            <span style="display: flex; align-items: center; gap: 6px;">
+              <svg viewBox="0 0 40 40" width="16" height="16" fill="var(--verde)" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+              Cacao 70%
+            </span>
+            <span style="display: flex; align-items: center; gap: 6px;">
+              <svg viewBox="0 0 40 40" width="16" height="16" fill="var(--verde)" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+              Centro húmedo
+            </span>
+            <span style="display: flex; align-items: center; gap: 6px;">
+              <svg viewBox="0 0 40 40" width="16" height="16" fill="var(--verde)" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+              Nueces tostadas
+            </span>
+            <span style="display: flex; align-items: center; gap: 6px;">
+              <svg viewBox="0 0 40 40" width="16" height="16" fill="var(--verde)" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+              Sin conservantes
+            </span>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center;">
+            <a class="btn btn-primario" href="https://wa.me/5493434685501?text=Hola%20Quatro!%20Quiero%20hacer%20un%20pedido%20de%20sus%20Brownies%20artesanales%20con%20cacao%2070%25" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+                <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.16 12.04 20.16C10.66 20.16 9.3 19.8 8.1 19.09L7.81 18.92L4.69 19.74L5.52 16.7L5.33 16.39C4.55 15.14 4.14 13.7 4.14 12.22C4.14 7.68 7.84 3.67 12.05 3.67ZM8.84 7.37C8.64 7.37 8.32 7.45 8.05 7.74C7.78 8.04 7.02 8.75 7.02 10.2C7.02 11.65 8.08 13.05 8.23 13.25C8.38 13.45 10.32 16.45 13.29 17.73C14 18.04 14.56 18.23 14.99 18.37C15.71 18.6 16.37 18.57 16.89 18.49C17.47 18.4 18.68 17.75 18.93 17.04C19.18 16.33 19.18 15.72 19.11 15.6C19.04 15.47 18.84 15.4 18.54 15.25C18.24 15.1 16.77 14.37 16.5 14.27C16.23 14.17 16.03 14.12 15.83 14.42C15.63 14.72 15.06 15.4 14.88 15.6C14.71 15.8 14.53 15.82 14.23 15.67C13.93 15.52 12.97 15.21 11.83 14.19C10.94 13.4 10.34 12.42 10.17 12.12C10 11.82 10.15 11.66 10.3 11.51C10.44 11.37 10.61 11.15 10.76 10.97C10.91 10.79 10.96 10.67 11.06 10.47C11.16 10.27 11.11 10.1 11.04 9.95C10.96 9.8 10.39 8.4 10.15 7.82C9.92 7.26 9.68 7.34 9.5 7.33C9.33 7.32 9.13 7.37 8.84 7.37Z"/>
+              </svg>
+              <span>Pedir brownies</span>
+            </a>
+            <a class="btn btn-secundario" href="#cajas">Ver las cajas</a>
+          </div>
+        </div>
+
+        <div style="position: relative; max-width: 480px; margin: 0 auto; width: 100%;">
+          <figure class="polaroid" style="--giro: 1.5deg;">
+            <img class="polaroid-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATyy0UPJr9uktSslcXFaILcM5N42t_dw4RuW5xcbEHCIkAkwtMHMqyMOTZyK8gjVBKZXTggh20jwaJYyipfS0ObxtimiG-7FgqyF7Ql3Kuy-NkgYWvNAZRRYEzCoQbKc9t8pXk58e3XzXJllOmuVLMXI-2fCiyxIBS0EEX0ZRMggkMrpLQsrM04SxCGSvm1EcMgAsNlDQQAKQt4GLY5s4TLy-syg9nidsVH-ZpJIkaoF6ugrlonjE" alt="Primer plano de brownies artesanales Quatro con craquelado brillante, nueces crocantes y sal marina de la Patagonia sobre plato menta pastel" fetchpriority="high" />
+            <figcaption>calentalo 10 segundos. de nada.</figcaption>
+          </figure>
+
+          <svg class="garabato garabato-hoja brotar" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true" focusable="false" style="position: absolute; top: -14px; left: 10px; --demora: 650ms;">
+            <path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/>
+            <path d="M8 32 L 28 12" stroke="var(--papel)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg class="garabato garabato-estrella brotar" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" style="position: absolute; bottom: 10px; right: -15px; --demora: 850ms;">
+            <path d="M12 2 L14.6 9 L22 9.3 L16.2 14 L18.3 21.5 L12 17.2 L5.7 21.5 L7.8 14 L2 9.3 L9.4 9 Z"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección B: Lo que lleva (y lo que no) -->
+    <section class="seccion" id="ingredientes" aria-labelledby="titulo-ingredientes">
+      <div class="contenedor">
+        <h2 id="titulo-ingredientes">Lo que lleva (y lo que no)</h2>
+
+        <div class="grilla-2" style="margin-top: var(--e5); align-items: start;">
+          <!-- Lleva -->
+          <div style="background: var(--blanco); padding: var(--e6); border-radius: var(--r-medio); border: 1px solid var(--linea);">
+            <h3 style="margin-bottom: var(--e4); color: var(--verde);">Lleva</h3>
+            <ul class="lista-hojas">
+              <li>
+                <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/><path d="M8 32 L 28 12" stroke="var(--papel)" stroke-width="2" stroke-linecap="round"/></svg>
+                <div>
+                  <strong>Cacao 70%</strong>
+                  <span>Chocolate amargo de verdad, con notas tostadas.</span>
+                </div>
+              </li>
+              <li>
+                <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/><path d="M8 32 L 28 12" stroke="var(--papel)" stroke-width="2" stroke-linecap="round"/></svg>
+                <div>
+                  <strong>Manteca de primera</strong>
+                  <span>Por eso brilla y se derrite.</span>
+                </div>
+              </li>
+              <li>
+                <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/><path d="M8 32 L 28 12" stroke="var(--papel)" stroke-width="2" stroke-linecap="round"/></svg>
+                <div>
+                  <strong>Huevos de campo</strong>
+                  <span>Los responsables de la costrita de arriba.</span>
+                </div>
+              </li>
+              <li>
+                <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/><path d="M8 32 L 28 12" stroke="var(--papel)" stroke-width="2" stroke-linecap="round"/></svg>
+                <div>
+                  <strong>Nueces tostadas</strong>
+                  <span>Las tostamos el mismo día.</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- No lleva -->
+          <div style="background: var(--brote); padding: var(--e6); border-radius: var(--r-medio); border: 1px solid var(--linea); position: relative;">
+            <h3 style="margin-bottom: var(--e4); color: var(--chocolate);">No lleva</h3>
+            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 18px;">
+              <li style="position: relative; width: fit-content; font-size: var(--fs-medio); font-weight: 650; color: var(--navy);">
+                <span>Premezclas</span>
+                <svg class="garabato-tachado" viewBox="0 0 200 20" aria-hidden="true"><path d="M2 12 C 50 6, 120 16, 198 8" stroke="var(--chocolate)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+              </li>
+              <li style="position: relative; width: fit-content; font-size: var(--fs-medio); font-weight: 650; color: var(--navy);">
+                <span>Margarina</span>
+                <svg class="garabato-tachado" viewBox="0 0 200 20" aria-hidden="true"><path d="M2 12 C 50 6, 120 16, 198 8" stroke="var(--chocolate)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+              </li>
+              <li style="position: relative; width: fit-content; font-size: var(--fs-medio); font-weight: 650; color: var(--navy);">
+                <span>Conservantes</span>
+                <svg class="garabato-tachado" viewBox="0 0 200 20" aria-hidden="true"><path d="M2 12 C 50 6, 120 16, 198 8" stroke="var(--chocolate)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+              </li>
+              <li style="position: relative; width: fit-content; font-size: var(--fs-medio); font-weight: 650; color: var(--navy);">
+                <span>Apuro</span>
+                <svg class="garabato-tachado" viewBox="0 0 200 20" aria-hidden="true"><path d="M2 12 C 50 6, 120 16, 198 8" stroke="var(--chocolate)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+              </li>
+            </ul>
+
+            <div style="margin-top: var(--e6);">
+              <span class="nota-mano nota-mano--choco" style="font-size: 1.45rem;">y nunca va a llevar</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección C: Cajas -->
+    <section class="seccion" id="cajas" aria-labelledby="titulo-cajas">
+      <div class="contenedor">
+        <h2>Elegí tu caja</h2>
+        <p class="seccion-intro">Listas para regalar, o para no compartir con nadie. Van en papel manteca y caja cerrada.</p>
+
+        <div class="grilla-3" style="margin-top: var(--e6); align-items: stretch;">
+
+          <!-- Caja 1: Cuarteto Clásico -->
+          <article class="tarjeta-caja">
+            <div>
+              <img class="tarjeta-caja-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABjraJYU2wIZT0dLpqG0lhpxDNhj8LRkEK52MeIkW1QQyhVv5DKAczJeYFSHBoLu1L-nfdmvDYKjh1_R8iUydolBIDhzHVeLVbCxicY5eJ5Ckw4lQnSfc20C4ZEZMoyY7-0MBXMOLrYJyu4P_qPeJZxQaJvy9tKJUgxciVw0pez86oyWAYRM5bit5r3FIDRidFI-eXoTgRbWINyINAyOkj9RobEXijscVkD34GEhR6SEJ0ruPvAyI" alt="Caja Cuarteto Clásico de 4 brownies artesanales con nueces" loading="lazy" />
+              <span class="etiqueta">4 brownies</span>
+              <h3 style="margin-top: 8px;">Cuarteto clásico</h3>
+              <p>Cuatro brownies generosos con nueces y sal patagónica.</p>
+              <ul class="lista-hojas" style="margin-top: var(--e3);">
+                <li>
+                  <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+                  <span>Porciones de 110 g aprox.</span>
+                </li>
+                <li>
+                  <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+                  <span>Nueces tostadas en el día</span>
+                </li>
+                <li>
+                  <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+                  <span>Merienda para 2 o 3</span>
+                </li>
+              </ul>
+            </div>
+            <div style="border-top: 1px dashed var(--linea); padding-top: var(--e4); margin-top: var(--e4); display: flex; flex-direction: column; gap: 10px;">
+              <div class="precio">$6.800</div>
+              <a class="btn btn-primario" href="https://wa.me/5493434685501?text=Hola%20chicos%20de%20Quatro!%20Quiero%20pedir%20la%20*Caja%20Cuarteto%20Cl%C3%A1sico*%20(4%20brownies)" target="_blank" rel="noopener noreferrer">Pedir esta caja</a>
+            </div>
+          </article>
+
+          <!-- Caja 2: Indulgencia (Destacada) -->
+          <article class="tarjeta-caja tarjeta-caja--destacada">
+            <span class="nota-mano" style="position: absolute; top: -14px; right: 14px; font-size: 1.25rem;">la más completa</span>
+            <div>
+              <img class="tarjeta-caja-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMusK6BFGSKbgEe_TSkS_77oppn7i6kIUncCIxcU62FQLJaVhq0FzdDNT_4GFxBg5x0KpcFYto1ClTIHZNfPwfM89_P2c6CQuNYYbA5c4WeOV40yUWM42hIhkNBeNvgZ005CIRz52nL1gAjcr-yUbC7WT-OElDJZu0AVNZC76fJhemOMMiAPy7vmOp4FVqLGItTCx31x10-umagMPn7hWRQ40eukBVdfDYxlFWXrxuL-MvCLzK7i8" alt="Caja Indulgencia de ocho brownies artesanales mixtos con dulce de leche" loading="lazy" />
+              <span class="etiqueta" style="background-color: var(--papel);">8 brownies</span>
+              <h3 style="margin-top: 8px;">Indulgencia</h3>
+              <p>Ocho brownies: cuatro clásicos con nueces y cuatro con hilos de dulce de leche.</p>
+              <ul class="lista-hojas" style="margin-top: var(--e3);">
+                <li>
+                  <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+                  <span>Dos sabores en una caja</span>
+                </li>
+                <li>
+                  <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+                  <span>Con cinta, lista para regalar</span>
+                </li>
+                <li>
+                  <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+                  <span>Hecha en lote chico</span>
+                </li>
+              </ul>
+            </div>
+            <div style="border-top: 1px dashed rgba(27, 45, 72, 0.2); padding-top: var(--e4); margin-top: var(--e4); display: flex; flex-direction: column; gap: 10px;">
+              <div style="position: relative; display: inline-block; width: fit-content;">
+                <div class="precio" style="font-size: 1.85rem;">$12.500</div>
+                <svg class="garabato-circulo" viewBox="0 0 200 80" aria-hidden="true" focusable="false">
+                  <path d="M100 6 C 160 4, 196 24, 192 44 C 188 68, 120 78, 70 74 C 24 70, 4 52, 10 32 C 16 14, 60 6, 112 10" stroke="var(--chocolate)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <a class="btn btn-primario" href="https://wa.me/5493434685501?text=Hola%20Quatro!%20Me%20encantar%C3%ADa%20pedir%20la%20*Caja%20Indulgencia*%20(8%20brownies%20mixtos%20con%20dulce%20de%20leche)." target="_blank" rel="noopener noreferrer">Pedir esta caja</a>
+            </div>
+          </article>
+
+          <!-- Caja 3: Mini Bocaditos -->
+          <article class="tarjeta-caja">
+            <div>
+              <img class="tarjeta-caja-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGHgSDJcO-LIpWRhctEgn4ZIRV0hKhGK18QpTYlYvbqw09gElAr6r6LzGj4j1O5jPfvKNiKq7yYJYhf3lYW9bFSdQWavFDzQzrsUdUmNX52wUz8xCHiBscwFBaE-SRUUSruDrojI7Cz4RrdT8gwvNDe2FTLXKvZmK8TwOTt9QJhdkZWHektScCIyxnq9xpqB27VVu3xw9QuCnxjDFKFq9UEqu_W2510NOcXn7QKm6wtX8wnOJwygI" alt="Bocaditos de brownie para eventos" loading="lazy" />
+              <span class="etiqueta">16 bocaditos</span>
+              <h3 style="margin-top: 8px;">Mini bocaditos</h3>
+              <p>Dieciséis bocaditos para picar en reuniones, cumpleaños o la oficina.</p>
+              <ul class="lista-hojas" style="margin-top: var(--e3);">
+                <li>
+                  <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+                  <span>Fáciles de servir</span>
+                </li>
+                <li>
+                  <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+                  <span>Doble cacao</span>
+                </li>
+                <li>
+                  <svg class="lista-hojas-icono" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true"><path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/></svg>
+                  <span>Con toppers de Quatro</span>
+                </li>
+              </ul>
+            </div>
+            <div style="border-top: 1px dashed var(--linea); padding-top: var(--e4); margin-top: var(--e4); display: flex; flex-direction: column; gap: 10px;">
+              <div class="precio">$11.200</div>
+              <a class="btn btn-primario" href="https://wa.me/5493434685501?text=Hola%20amigos%20de%20Quatro!%20Quiero%20la%20caja%20de%20*Mini%20Bocaditos%20para%20Compartir*%20(16%20unidades)." target="_blank" rel="noopener noreferrer">Pedir esta caja</a>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección D: Con qué va mejor -->
+    <section class="seccion" id="maridaje" aria-labelledby="titulo-maridaje">
+      <div class="contenedor">
+        <h2 id="titulo-maridaje">Con qué va mejor</h2>
+        <p class="seccion-intro">El chocolate 70% tiene mucha presencia. Estas son nuestras tres combinaciones preferidas en la cocina:</p>
+
+        <div class="grilla-3" style="margin-top: var(--e6);">
+          <div>
+            <svg class="garabato-hoja" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true" focusable="false" style="margin-bottom: 8px;">
+              <path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/>
+            </svg>
+            <h3>Café</h3>
+            <p>Un espresso o un flat white corta lo dulce y le saca lo mejor a las nueces tostadas.</p>
+          </div>
+
+          <div>
+            <svg class="garabato-estrella" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" style="margin-bottom: 8px; width: 28px; height: 28px;">
+              <path d="M12 2 L14.6 9 L22 9.3 L16.2 14 L18.3 21.5 L12 17.2 L5.7 21.5 L7.8 14 L2 9.3 L9.4 9 Z"/>
+            </svg>
+            <h3>Mate amargo</h3>
+            <p>El clásico. La yerba suave y caliente limpia el paladar entre bocado y bocado. No hace falta explicar nada.</p>
+          </div>
+
+          <div>
+            <svg class="garabato-hoja" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true" focusable="false" style="margin-bottom: 8px; color: var(--chocolate);">
+              <path d="M6 34 C 6 16, 20 6, 34 6 C 34 22, 22 34, 6 34 Z"/>
+            </svg>
+            <h3>Leche bien fría</h3>
+            <p>Brownie tibio (10 segundos de microondas) y un vaso helado. Nostalgia pura de merienda.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección E: Banda de Cierre -->
+    <div class="contenedor">
+      <section class="banda-cierre" aria-labelledby="titulo-cierre-brownies">
+        <h2 id="titulo-cierre-brownies">¿Te tentaste?</h2>
+        <p>Escribinos y reservá los tuyos para la próxima hornada.</p>
+        <a class="btn btn-dulce" href="https://wa.me/5493434685501?text=Hola%20chicos%20de%20Quatro!%20Quiero%20hacer%20un%20pedido%20de%20brownies." target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+            <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.16 12.04 20.16C10.66 20.16 9.3 19.8 8.1 19.09L7.81 18.92L4.69 19.74L5.52 16.7L5.33 16.39C4.55 15.14 4.14 13.7 4.14 12.22C4.14 7.68 7.84 3.67 12.05 3.67ZM8.84 7.37C8.64 7.37 8.32 7.45 8.05 7.74C7.78 8.04 7.02 8.75 7.02 10.2C7.02 11.65 8.08 13.05 8.23 13.25C8.38 13.45 10.32 16.45 13.29 17.73C14 18.04 14.56 18.23 14.99 18.37C15.71 18.6 16.37 18.57 16.89 18.49C17.47 18.4 18.68 17.75 18.93 17.04C19.18 16.33 19.18 15.72 19.11 15.6C19.04 15.47 18.84 15.4 18.54 15.25C18.24 15.1 16.77 14.37 16.5 14.27C16.23 14.17 16.03 14.12 15.83 14.42C15.63 14.72 15.06 15.4 14.88 15.6C14.71 15.8 14.53 15.82 14.23 15.67C13.93 15.52 12.97 15.21 11.83 14.19C10.94 13.4 10.34 12.42 10.17 12.12C10 11.82 10.15 11.66 10.3 11.51C10.44 11.37 10.61 11.15 10.76 10.97C10.91 10.79 10.96 10.67 11.06 10.47C11.16 10.27 11.11 10.1 11.04 9.95C10.96 9.8 10.39 8.4 10.15 7.82C9.92 7.26 9.68 7.34 9.5 7.33C9.33 7.32 9.13 7.37 8.84 7.37Z"/>
+          </svg>
+          <span>Pedir brownies por WhatsApp</span>
+        </a>
+      </section>
+    </div>
+
+  </main>
+
+  <aside>
+    <a class="btn-flotante-wa" href="https://wa.me/5493434685501?text=Hola%20Quatro!%20Quiero%20pedir%20brownies." target="_blank" rel="noopener noreferrer" aria-label="Pedir por WhatsApp">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true" focusable="false">
+        <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.16 12.04 20.16C10.66 20.16 9.3 19.8 8.1 19.09L7.81 18.92L4.69 19.74L5.52 16.7L5.33 16.39C4.55 15.14 4.14 13.7 4.14 12.22C4.14 7.68 7.84 3.67 12.05 3.67ZM8.84 7.37C8.64 7.37 8.32 7.45 8.05 7.74C7.78 8.04 7.02 8.75 7.02 10.2C7.02 11.65 8.08 13.05 8.23 13.25C8.38 13.45 10.32 16.45 13.29 17.73C14 18.04 14.56 18.23 14.99 18.37C15.71 18.6 16.37 18.57 16.89 18.49C17.47 18.4 18.68 17.75 18.93 17.04C19.18 16.33 19.18 15.72 19.11 15.6C19.04 15.47 18.84 15.4 18.54 15.25C18.24 15.1 16.77 14.37 16.5 14.27C16.23 14.17 16.03 14.12 15.83 14.42C15.63 14.72 15.06 15.4 14.88 15.6C14.71 15.8 14.53 15.82 14.23 15.67C13.93 15.52 12.97 15.21 11.83 14.19C10.94 13.4 10.34 12.42 10.17 12.12C10 11.82 10.15 11.66 10.3 11.51C10.44 11.37 10.61 11.15 10.76 10.97C10.91 10.79 10.96 10.67 11.06 10.47C11.16 10.27 11.11 10.1 11.04 9.95C10.96 9.8 10.39 8.4 10.15 7.82C9.92 7.26 9.68 7.34 9.5 7.33C9.33 7.32 9.13 7.37 8.84 7.37Z"/>
+      </svg>
+    </a>
+  </aside>
+
+  <footer class="pie">
+    <div class="contenedor">
+      <div class="pie-grilla">
+        <div class="pie-columna">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+            <img src="logo.png" alt="Logo de Quatro" width="32" height="32" style="border-radius: var(--r-chico);" />
+            <h2 class="pie-titulo" style="margin: 0;">Quatro</h2>
+          </div>
+          <p style="font-size: var(--fs-base); color: var(--texto-suave);">
+            Cuatro amigos, un horno y demasiado dulce de leche.
+          </p>
+        </div>
+
+        <div class="pie-columna">
+          <h2 class="pie-titulo">Cuándo horneamos</h2>
+          <ul class="pie-lista">
+            <li>Martes a domingos</li>
+            <li>Entregas coordinadas por la mañana y tarde</li>
+            <li>Horneamos en el día a pedido</li>
+          </ul>
+        </div>
+
+        <div class="pie-columna">
+          <h2 class="pie-titulo">Escribinos</h2>
+          <p style="font-size: var(--fs-chico); color: var(--texto-suave); margin-bottom: 12px;">
+            Pedidos, consultas y cajas para regalar o eventos: todo por WhatsApp.
+          </p>
+          <a class="btn btn-secundario btn-sm" href="https://wa.me/5493434685501?text=Hola%20Quatro!" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.16 12.04 20.16C10.66 20.16 9.3 19.8 8.1 19.09L7.81 18.92L4.69 19.74L5.52 16.7L5.33 16.39C4.55 15.14 4.14 13.7 4.14 12.22C4.14 7.68 7.84 3.67 12.05 3.67ZM8.84 7.37C8.64 7.37 8.32 7.45 8.05 7.74C7.78 8.04 7.02 8.75 7.02 10.2C7.02 11.65 8.08 13.05 8.23 13.25C8.38 13.45 10.32 16.45 13.29 17.73C14 18.04 14.56 18.23 14.99 18.37C15.71 18.6 16.37 18.57 16.89 18.49C17.47 18.4 18.68 17.75 18.93 17.04C19.18 16.33 19.18 15.72 19.11 15.6C19.04 15.47 18.84 15.4 18.54 15.25C18.24 15.1 16.77 14.37 16.5 14.27C16.23 14.17 16.03 14.12 15.83 14.42C15.63 14.72 15.06 15.4 14.88 15.6C14.71 15.8 14.53 15.82 14.23 15.67C13.93 15.52 12.97 15.21 11.83 14.19C10.94 13.4 10.34 12.42 10.17 12.12C10 11.82 10.15 11.66 10.3 11.51C10.44 11.37 10.61 11.15 10.76 10.97C10.91 10.79 10.96 10.67 11.06 10.47C11.16 10.27 11.11 10.1 11.04 9.95C10.96 9.8 10.39 8.4 10.15 7.82C9.92 7.26 9.68 7.34 9.5 7.33C9.33 7.32 9.13 7.37 8.84 7.37Z"/>
+            </svg>
+            <span>343 468-5501</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="pie-linea-final">
+        <span>© 2026 Quatro. Hecho a mano, con harina hasta en las orejas.</span>
+        <span class="nota-mano nota-mano--choco nota-mano--recta" style="font-size: 1.15rem;">Paraná y Santa Fe</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
