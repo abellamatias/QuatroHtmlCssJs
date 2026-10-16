@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brownies 3D - Quatro</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+    }
+    #mis-brownies-3d {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+      touch-action: none;
+    }
+    #mis-brownies-3d:active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+<body>
+<!-- 1. Contenedor donde se renderizarán los Brownies 3D -->
+<div id="mis-brownies-3d"></div>
+
+<!-- 2. Importar Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- 3. Inicializar el componente 3D con tus ajustes actuales -->
+<script>
+function mountBrownies3D(container, userConfig = {}) {
+            const config = Object.assign({
+                baseSpeed: 0.35,         // Velocidad angular constante objetivo (rad/s)
+                damping: 2.6,            // Factor de desaceleración exponencial tras soltar
+                dragSensitivity: 1.0,    // Multiplicador de sensibilidad al arrastrar
+                cameraElevationDeg: 28,  // Ángulo vertical fijo de cámara (solo gira horizontalmente)
+                cameraDistance: 7.4      // Distancia de la cámara
+            }, userConfig);
+
+            // 1. Escena, Cámara y Renderer con canal alfa para permitir cualquier fondo
+            const scene = new THREE.Scene();
+
+            const camera = new THREE.PerspectiveCamera(
+                36,
+                container.clientWidth / container.clientHeight,
+                0.1,
+                100
+            );
+
+            const renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                alpha: true,
+                powerPreference: 'high-performance'
+            });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.08;
+
+            container.appendChild(renderer.domElement);
+
+            // Posicionar la cámara en un ángulo de tres cuartos elevado (fijo verticalmente)
+            function updateCameraPosition() {
+                const elevRad = THREE.MathUtils.degToRad(config.cameraElevationDeg);
+                // Ajustar distancia ligeramente en pantallas móviles verticales para que nunca se corte
+                const aspect = container.clientWidth / Math.max(1, container.clientHeight);
+                const responsiveDist = aspect < 0.85 ? config.cameraDistance * (0.88 / Math.max(0.52, aspect)) : config.cameraDistance;
+
+                camera.position.set(
+                    0,
+                    Math.sin(elevRad) * responsiveDist,
+                    Math.cos(elevRad) * responsiveDist
+                );
+                camera.lookAt(0, 0.25, 0);
+            }
+            updateCameraPosition();
+
+            // 2. Iluminación cálida de estudio + estilo ilustrado acogedor
+            const hemiLight = new THREE.HemisphereLight(0xfff9ea, 0x4b382a, 0.92);
+            hemiLight.position.set(0, 10, 0);
+            scene.add(hemiLight);
+
+            // Luz principal cálida para resaltar el brillo quebradizo de la costra superior
+            const mainDirLight = new THREE.DirectionalLight(0xfff3db, 0.95);
+            mainDirLight.position.set(5.5, 9.5, 6.5);
+            mainDirLight.castShadow = true;
+            mainDirLight.shadow.mapSize.width = 2048;
+            mainDirLight.shadow.mapSize.height = 2048;
+            mainDirLight.shadow.camera.near = 1;
+            mainDirLight.shadow.camera.far = 25;
+            const d = 4.2;
+            mainDirLight.shadow.camera.left = -d;
+            mainDirLight.shadow.camera.right = d;
+            mainDirLight.shadow.camera.top = d;
+            mainDirLight.shadow.camera.bottom = -d;
+            mainDirLight.shadow.bias = -0.0005;
+            scene.add(mainDirLight);
+
+            // Contraluz suave para separar los bordes de chocolate y darle relieve 3D
+            const rimLight = new THREE.DirectionalLight(0xfde8c8, 0.48);
+            rimLight.position.set(-6, 5, -5);
+            scene.add(rimLight);
+
+            // Grupo raíz que rota horizontalmente (eje Y)
+            const turntableGroup = new THREE.Group();
+            // Ángulo inicial idéntico al escorzo en rombo de la ilustración
+            turntableGroup.rotation.y = THREE.MathUtils.degToRad(38);
+            scene.add(turntableGroup);
+
+            // Generador pseudoaleatorio determinista para texturas y geometría consistentes
+            let seed = 4219;
+            function seededRandom() {
+                seed = (seed * 16807) % 2147483647;
+                return (seed - 1) / 2147483646;
+            }
+
+            // Ruido 2D suave para deformar geometrías de forma orgánica
+            function pseudoNoise3D(x, y, z) {
+                return (
+                    Math.sin(x * 3.7 + y * 2.3) * 0.45 +
+                    Math.cos(z * 4.1 - x * 3.1) * 0.35 +
+                    Math.sin((x + z) * 7.2 + y * 5.0) * 0.20
+                );
+            }
+
+            // ========================================================================
+            // 3. GENERACIÓN PROCEDURAL DE TEXTURAS (FIELES A LA ILUSTRACIÓN)
+            // ========================================================================
+
+            /**
+             * Textura A: Costra superior del brownie (papelito brillante quebradizo con grietas oscuras)
+             */
+            function createBrownieTopTextures() {
+                const size = 512;
+                const diffCanvas = document.createElement('canvas');
+                diffCanvas.width = size;
+                diffCanvas.height = size;
+                const ctx = diffCanvas.getContext('2d');
+
+                const bumpCanvas = document.createElement('canvas');
+                bumpCanvas.width = size;
+                bumpCanvas.height = size;
+                const bCtx = bumpCanvas.getContext('2d');
+
+                // Base chocolate medio cálido (costra horneada)
+                ctx.fillStyle = '#6c3923';
+                ctx.fillRect(0, 0, size, size);
+
+                bCtx.fillStyle = '#b0b0b0';
+                bCtx.fillRect(0, 0, size, size);
+
+                // Placas de costra brillante horneada (tonos #7d452d y #8f543a estilo pincelada)
+                for (let i = 0; i < 140; i++) {
+                    const cx = seededRandom() * size;
+                    const cy = seededRandom() * size;
+                    const rx = 20 + seededRandom() * 55;
+                    const ry = 14 + seededRandom() * 40;
+                    const angle = seededRandom() * Math.PI;
+
+                    ctx.save();
+                    ctx.translate(cx, cy);
+                    ctx.rotate(angle);
+
+                    const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, rx);
+                    const lightTone = seededRandom() > 0.45 ? '#894f36' : '#774029';
+                    grad.addColorStop(0, lightTone);
+                    grad.addColorStop(0.7, '#64331e');
+                    grad.addColorStop(1, 'rgba(90, 44, 25, 0)');
+
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    // Relieve elevado en la placa
+                    bCtx.save();
+                    bCtx.translate(cx, cy);
+                    bCtx.rotate(angle);
+                    bCtx.fillStyle = 'rgba(235, 235, 235, 0.35)';
+                    bCtx.beginPath();
+                    bCtx.ellipse(0, 0, rx * 0.85, ry * 0.85, 0, 0, Math.PI * 2);
+                    bCtx.fill();
+                    bCtx.restore();
+                }
+
+                // Brillos suaves de la costra tipo merengue de brownie
+                for (let i = 0; i < 65; i++) {
+                    const x = seededRandom() * size;
+                    const y = seededRandom() * size;
+                    const w = 15 + seededRandom() * 35;
+                    const h = 6 + seededRandom() * 14;
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(seededRandom() * Math.PI);
+                    ctx.fillStyle = 'rgba(168, 108, 82, 0.28)';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                // Grietas profundas características del brownie (fudge oscuro #281007)
+                for (let c = 0; c < 34; c++) {
+                    let x = seededRandom() * size;
+                    let y = seededRandom() * size;
+                    let angle = seededRandom() * Math.PI * 2;
+                    const steps = 6 + Math.floor(seededRandom() * 10);
+
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    bCtx.beginPath();
+                    bCtx.moveTo(x, y);
+
+                    for (let s = 0; s < steps; s++) {
+                        angle += (seededRandom() - 0.5) * 1.2;
+                        x += Math.cos(angle) * (12 + seededRandom() * 16);
+                        y += Math.sin(angle) * (12 + seededRandom() * 16);
+                        ctx.lineTo(x, y);
+                        bCtx.lineTo(x, y);
+                    }
+
+                    // Borde iluminado junto a la grieta (efecto hojuela rota)
+                    ctx.strokeStyle = 'rgba(162, 100, 72, 0.55)';
+                    ctx.lineWidth = 4.5;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.stroke();
+
+                    // Interior oscuro de la grieta
+                    ctx.strokeStyle = '#291108';
+                    ctx.lineWidth = 1.8 + seededRandom() * 2.2;
+                    ctx.stroke();
+
+                    // Hundimiento en el mapa de bump
+                    bCtx.strokeStyle = '#181818';
+                    bCtx.lineWidth = 5;
+                    bCtx.lineCap = 'round';
+                    bCtx.stroke();
+                }
+
+                const diffuseMap = new THREE.CanvasTexture(diffCanvas);
+                diffuseMap.encoding = THREE.sRGBEncoding;
+                const bumpMap = new THREE.CanvasTexture(bumpCanvas);
+
+                return { diffuseMap, bumpMap };
+            }
+
+            /**
+             * Textura B: Laterales húmedos y migosos del brownie (con trozos de chocolate y alvéolos)
+             */
+            function createBrownieSideTextures() {
+                const width = 512;
+                const height = 256;
+                const diffCanvas = document.createElement('canvas');
+                diffCanvas.width = width;
+                diffCanvas.height = height;
+                const ctx = diffCanvas.getContext('2d');
+
+                const bumpCanvas = document.createElement('canvas');
+                bumpCanvas.width = width;
+                bumpCanvas.height = height;
+                const bCtx = bumpCanvas.getContext('2d');
+
+                // Fondo fudge denso
+                ctx.fillStyle = '#3f1d10';
+                ctx.fillRect(0, 0, width, height);
+
+                bCtx.fillStyle = '#808080';
+                bCtx.fillRect(0, 0, width, height);
+
+                // Textura esponjosa / húmeda de miga
+                for (let i = 0; i < 420; i++) {
+                    const x = seededRandom() * width;
+                    const y = seededRandom() * height;
+                    const r = 3 + seededRandom() * 12;
+                    const tones = ['#2a1108', '#4d2415', '#5c2d1b', '#33150b', '#6b3622'];
+                    const col = tones[Math.floor(seededRandom() * tones.length)];
+
+                    ctx.fillStyle = col;
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    bCtx.fillStyle = col === '#2a1108' ? '#202020' : '#bababa';
+                    bCtx.beginPath();
+                    bCtx.arc(x, y, r * 0.9, 0, Math.PI * 2);
+                    bCtx.fill();
+                }
+
+                // Cavidades y trozos de chocolate fundido como en la ilustración
+                for (let i = 0; i < 95; i++) {
+                    const x = seededRandom() * width;
+                    const y = 28 + seededRandom() * (height - 45);
+                    const rx = 5 + seededRandom() * 14;
+                    const ry = 4 + seededRandom() * 9;
+                    const rot = seededRandom() * Math.PI;
+
+                    // Sombra / hueco oscuro
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(rot);
+                    ctx.fillStyle = '#1d0b05';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Reborde cálido inferior
+                    ctx.strokeStyle = 'rgba(130, 71, 46, 0.55)';
+                    ctx.lineWidth = 1.8;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, rx * 0.85, 0.15, Math.PI - 0.15);
+                    ctx.stroke();
+                    ctx.restore();
+
+                    bCtx.save();
+                    bCtx.translate(x, y);
+                    bCtx.rotate(rot);
+                    bCtx.fillStyle = '#121212';
+                    bCtx.beginPath();
+                    bCtx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+                    bCtx.fill();
+                    bCtx.restore();
+                }
+
+                // Franja superior donde la costra clara se dobla ligeramente hacia los lados
+                const topGrad = ctx.createLinearGradient(0, 0, 0, 42);
+                topGrad.addColorStop(0, '#7c442c');
+                topGrad.addColorStop(0.55, '#633420');
+                topGrad.addColorStop(1, 'rgba(63, 29, 16, 0)');
+                ctx.fillStyle = topGrad;
+                ctx.fillRect(0, 0, width, 42);
+
+                const diffuseMap = new THREE.CanvasTexture(diffCanvas);
+                diffuseMap.encoding = THREE.sRGBEncoding;
+                const bumpMap = new THREE.CanvasTexture(bumpCanvas);
+
+                return { diffuseMap, bumpMap };
+            }
+
+            /**
+             * Textura C: Servilleta verde salvia con pespunte azul marino y florcitas de 3 pétalos en las esquinas
+             */
+            function createNapkinTextures() {
+                const size = 1024;
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                const bumpCanvas = document.createElement('canvas');
+                bumpCanvas.width = size;
+                bumpCanvas.height = size;
+                const bCtx = bumpCanvas.getContext('2d');
+
+                // Color base verde salvia ilustrado (#5f7352)
+                ctx.fillStyle = '#5f7352';
+                ctx.fillRect(0, 0, size, size);
+
+                bCtx.fillStyle = '#808080';
+                bCtx.fillRect(0, 0, size, size);
+
+                // Pinceladas suaves de acuarela/gouache en la tela
+                for (let i = 0; i < 180; i++) {
+                    const x = seededRandom() * size;
+                    const y = seededRandom() * size;
+                    const r = 30 + seededRandom() * 90;
+                    const grad = ctx.createRadialGradient(x, y, 4, x, y, r);
+                    const isLight = seededRandom() > 0.5;
+                    grad.addColorStop(0, isLight ? 'rgba(116, 137, 101, 0.16)' : 'rgba(72, 90, 61, 0.18)');
+                    grad.addColorStop(1, 'rgba(95, 115, 82, 0)');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Sombra suave bajo el centro donde apoyan los brownies
+                const centerShadow = ctx.createRadialGradient(size / 2, size / 2, 80, size / 2, size / 2, 370);
+                centerShadow.addColorStop(0, 'rgba(38, 50, 32, 0.42)');
+                centerShadow.addColorStop(0.65, 'rgba(46, 60, 39, 0.18)');
+                centerShadow.addColorStop(1, 'rgba(95, 115, 82, 0)');
+                ctx.fillStyle = centerShadow;
+                ctx.fillRect(0, 0, size, size);
+
+                // Trama sutil de lino/algodón en el mapa de relieve
+                bCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                bCtx.lineWidth = 2;
+                for (let i = 0; i < size; i += 6) {
+                    bCtx.beginPath();
+                    bCtx.moveTo(0, i);
+                    bCtx.lineTo(size, i);
+                    bCtx.stroke();
+                    bCtx.beginPath();
+                    bCtx.moveTo(i, 0);
+                    bCtx.lineTo(i, size);
+                    bCtx.stroke();
+                }
+
+                // Bordado azul marino (#213547) fiel al dibujo:
+                // 1. Línea continua exterior fina cerca del borde
+                const marginOuter = 44;
+                const marginStitch = 72;
+                ctx.strokeStyle = '#223648';
+                ctx.lineWidth = 4.5;
+                ctx.lineJoin = 'round';
+                ctx.strokeRect(marginOuter, marginOuter, size - marginOuter * 2, size - marginOuter * 2);
+
+                // 2. Línea interior pespunteada (- - - - -)
+                ctx.save();
+                ctx.strokeStyle = '#223648';
+                ctx.lineWidth = 5.5;
+                ctx.lineCap = 'round';
+                ctx.setLineDash([18, 16]);
+                ctx.strokeRect(marginStitch, marginStitch, size - marginStitch * 2, size - marginStitch * 2);
+                ctx.restore();
+
+                // 3. Motivo floral de 3 pétalos en las 4 esquinas (idéntico a la servilleta de la imagen)
+                function drawCornerFloral(cx, cy, rotAngle) {
+                    ctx.save();
+                    ctx.translate(cx, cy);
+                    ctx.rotate(rotAngle);
+                    ctx.fillStyle = '#223648';
+                    ctx.strokeStyle = '#223648';
+
+                    // Tres pétalos apuntando hacia el centro de la servilleta
+                    const petalAngles = [-0.52, 0, 0.52];
+                    petalAngles.forEach((a, idx) => {
+                        ctx.save();
+                        ctx.rotate(a);
+                        const len = idx === 1 ? 34 : 27;
+                        const wid = idx === 1 ? 9.5 : 8;
+                        ctx.beginPath();
+                        ctx.ellipse(len, 0, len * 0.65, wid, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Pequeño centro claro en el pétalo como en la ilustración
+                        ctx.fillStyle = '#5f7352';
+                        ctx.beginPath();
+                        ctx.ellipse(len * 0.95, 0, len * 0.25, wid * 0.32, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#223648';
+                        ctx.restore();
+                    });
+
+                    ctx.restore();
+                }
+
+                const cornerOffset = 88;
+                drawCornerFloral(cornerOffset, cornerOffset, Math.PI * 0.25);
+                drawCornerFloral(size - cornerOffset, cornerOffset, Math.PI * 0.75);
+                drawCornerFloral(size - cornerOffset, size - cornerOffset, -Math.PI * 0.75);
+                drawCornerFloral(cornerOffset, size - cornerOffset, -Math.PI * 0.25);
+
+                const diffuseMap = new THREE.CanvasTexture(canvas);
+                diffuseMap.encoding = THREE.sRGBEncoding;
+                diffuseMap.anisotropy = 4;
+
+                const bumpMap = new THREE.CanvasTexture(bumpCanvas);
+
+                return { diffuseMap, bumpMap };
+            }
+
+            const topTextures = createBrownieTopTextures();
+            const sideTextures = createBrownieSideTextures();
+            const napkinTextures = createNapkinTextures();
+
+            // ========================================================================
+            // 4. CONSTRUCCIÓN DE LA SERVILLETA PLEGADA EN 3D
+            // ========================================================================
+            function createFoldedNapkin() {
+                const napkinGroup = new THREE.Group();
+
+                const napkinMat = new THREE.MeshStandardMaterial({
+                    map: napkinTextures.diffuseMap,
+                    bumpMap: napkinTextures.bumpMap,
+                    bumpScale: 0.018,
+                    roughness: 0.86,
+                    metalness: 0.02
+                });
+
+                // Función auxiliar para deformar una capa de tela suave con bordes redondeados y ondas naturales
+                function buildClothLayer(width, thickness, depth, waveSeed) {
+                    const geo = new THREE.BoxGeometry(width, thickness, depth, 40, 4, 40);
+                    const pos = geo.attributes.position;
+                    const halfW = width / 2;
+                    const halfD = depth / 2;
+
+                    for (let i = 0; i < pos.count; i++) {
+                        let x = pos.getX(i);
+                        let y = pos.getY(i);
+                        let z = pos.getZ(i);
+
+                        // Suavizar y redondear las esquinas en planta (como tela doblada)
+                        const nx = x / halfW;
+                        const nz = z / halfD;
+                        const edgeDist = Math.max(Math.abs(nx), Math.abs(nz));
+
+                        // Pequeño redondeo en las puntas extremas
+                        if (Math.abs(nx) > 0.85 && Math.abs(nz) > 0.85) {
+                            const cornerFactor = (Math.abs(nx) - 0.85) * (Math.abs(nz) - 0.85);
+                            x *= (1 - cornerFactor * 0.45);
+                            z *= (1 - cornerFactor * 0.45);
+                        }
+
+                        // Hundimiento suave en el centro por el peso de los brownies y bordes ligeramente levantados
+                        const radial = Math.sqrt(nx * nx + nz * nz);
+                        const edgeLift = Math.pow(Math.min(1.2, radial), 2.2) * 0.14;
+                        const organicWave = Math.sin(x * 1.9 + waveSeed) * Math.cos(z * 1.7 - waveSeed) * 0.045 * radial;
+
+                        // Redondear el borde vertical de la tela (pliegue grueso)
+                        if (edgeDist > 0.88) {
+                            const t = (edgeDist - 0.88) / 0.12;
+                            y *= Math.cos(t * Math.PI * 0.38);
+                        }
+
+                        y += edgeLift + organicWave;
+
+                        pos.setXYZ(i, x, y, z);
+                    }
+
+                    geo.computeVertexNormals();
+                    const mesh = new THREE.Mesh(geo, napkinMat);
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    return mesh;
+                }
+
+                // Capa superior principal de la servilleta
+                const topLayer = buildClothLayer(3.65, 0.11, 3.65, 0.0);
+                topLayer.position.y = -0.04;
+                napkinGroup.add(topLayer);
+
+                // Segunda capa inferior asomando diagonalmente (como el pliegue doble de la ilustración)
+                const bottomLayer = buildClothLayer(3.62, 0.10, 3.62, 2.1);
+                bottomLayer.position.set(0.16, -0.13, 0.12);
+                bottomLayer.rotation.y = THREE.MathUtils.degToRad(-8.5);
+                napkinGroup.add(bottomLayer);
+
+                return napkinGroup;
+            }
+
+            const napkin = createFoldedNapkin();
+            turntableGroup.add(napkin);
+
+            // ========================================================================
+            // 5. CONSTRUCCIÓN DE LOS 2 BROWNIES ARTESANALES EN 3D
+            // ========================================================================
+            const brownieTopMat = new THREE.MeshStandardMaterial({
+                map: topTextures.diffuseMap,
+                bumpMap: topTextures.bumpMap,
+                bumpScale: 0.045,
+                roughness: 0.36, // Costra horneada ligeramente satinada como en el dibujo
+                metalness: 0.04
+            });
+
+            const brownieSideMat = new THREE.MeshStandardMaterial({
+                map: sideTextures.diffuseMap,
+                bumpMap: sideTextures.bumpMap,
+                bumpScale: 0.065,
+                roughness: 0.82, // Interior de miga húmeda mate
+                metalness: 0.02
+            });
+
+            const brownieBottomMat = new THREE.MeshStandardMaterial({
+                color: 0x261007,
+                roughness: 0.92
+            });
+
+            // Materiales por cara del cubo subdividido: [Right, Left, Top, Bottom, Front, Back]
+            const brownieMaterials = [
+                brownieSideMat,
+                brownieSideMat,
+                brownieTopMat,
+                brownieBottomMat,
+                brownieSideMat,
+                brownieSideMat
+            ];
+
+            // Material para los trozos de chocolate 3D incrustados en los laterales y bordes
+            const chocoChunkMat = new THREE.MeshStandardMaterial({
+                color: 0x210c05,
+                roughness: 0.42,
+                metalness: 0.05
+            });
+
+            const warmCrumbHighlightMat = new THREE.MeshStandardMaterial({
+                color: 0x6f3923,
+                roughness: 0.65,
+                metalness: 0.02
+            });
+
+            function createSingleBrownie(width, height, depth, noiseOffset) {
+                const brownieUnit = new THREE.Group();
+
+                // Malla principal con alta subdivisión para esculpir bordes orgánicos y grietas 3D
+                const geo = new THREE.BoxGeometry(width, height, depth, 28, 14, 28);
+                const pos = geo.attributes.position;
+                const halfW = width / 2;
+                const halfH = height / 2;
+                const halfD = depth / 2;
+
+                for (let i = 0; i < pos.count; i++) {
+                    let x = pos.getX(i);
+                    let y = pos.getY(i);
+                    let z = pos.getZ(i);
+
+                    const nx = x / halfW;
+                    const ny = y / halfH;
+                    const nz = z / halfD;
+
+                    // 1. Biselado suave e irregular en las aristas para evitar bordes rectos artificiales
+                    const edgeX = Math.max(0, Math.abs(nx) - 0.84) / 0.16;
+                    const edgeY = Math.max(0, Math.abs(ny) - 0.80) / 0.20;
+                    const edgeZ = Math.max(0, Math.abs(nz) - 0.84) / 0.16;
+
+                    const bevelFactor = 1.0 - (edgeX * edgeY + edgeZ * edgeY + edgeX * edgeZ) * 0.09;
+                    x *= bevelFactor;
+                    z *= bevelFactor;
+
+                    // 2. Deformación orgánica de corte artesanal en laterales
+                    const nVal = pseudoNoise3D(x * 1.4 + noiseOffset, y * 2.1, z * 1.4 - noiseOffset);
+                    const fineNoise = pseudoNoise3D(x * 4.5 - noiseOffset, y * 4.8, z * 4.5 + noiseOffset);
+
+                    x += nVal * 0.055 + fineNoise * 0.022;
+                    z += nVal * 0.055 - fineNoise * 0.022;
+
+                    // 3. Relieve ondulado en la cara superior (costra inflada y agrietada del brownie)
+                    if (ny > 0.6) {
+                        const centerDome = (1 - (nx * nx + nz * nz) * 0.35) * 0.045;
+                        const crustWave = Math.sin(x * 5.2 + noiseOffset) * Math.cos(z * 4.8) * 0.028;
+                        // Borde superior ligeramente abombado como merengue de brownie
+                        const rimLip = (edgeX > 0.1 || edgeZ > 0.1) ? 0.025 : 0;
+                        y += centerDome + crustWave + rimLip;
+                    }
+
+                    pos.setXYZ(i, x, y, z);
+                }
+
+                geo.computeVertexNormals();
+
+                const mainMesh = new THREE.Mesh(geo, brownieMaterials);
+                mainMesh.castShadow = true;
+                mainMesh.receiveShadow = true;
+                brownieUnit.add(mainMesh);
+
+                // 4. Incrustar trozos reales de chocolate 3D y relieves de miga en las 4 caras laterales
+                // Esto hace que al girar la cámara la silueta tenga relieve 3D auténtico
+                const chunkGeo = new THREE.DodecahedronGeometry(1, 0);
+                const faces = [
+                    { axis: 'z', dir: 1, span: width },
+                    { axis: 'z', dir: -1, span: width },
+                    { axis: 'x', dir: 1, span: depth },
+                    { axis: 'x', dir: -1, span: depth }
+                ];
+
+                faces.forEach((face) => {
+                    for (let c = 0; c < 18; c++) {
+                        const isDarkChunk = seededRandom() > 0.35;
+                        const chunk = new THREE.Mesh(
+                            chunkGeo,
+                            isDarkChunk ? chocoChunkMat : warmCrumbHighlightMat
+                        );
+
+                        const sx = 0.045 + seededRandom() * 0.065;
+                        const sy = 0.032 + seededRandom() * 0.048;
+                        const sz = 0.035 + seededRandom() * 0.055;
+                        chunk.scale.set(sx, sy, sz);
+
+                        const along = (seededRandom() - 0.5) * (face.span * 0.84);
+                        const vert = (seededRandom() - 0.52) * (height * 0.68);
+                        const protrude = (face.span / 2) * 0.96;
+
+                        if (face.axis === 'z') {
+                            chunk.position.set(along, vert, face.dir * protrude);
+                        } else {
+                            chunk.position.set(face.dir * protrude, vert, along);
+                        }
+
+                        chunk.rotation.set(
+                            seededRandom() * Math.PI,
+                            seededRandom() * Math.PI,
+                            seededRandom() * Math.PI
+                        );
+                        chunk.castShadow = true;
+                        chunk.receiveShadow = true;
+                        brownieUnit.add(chunk);
+                    }
+                });
+
+                return brownieUnit;
+            }
+
+            // Brownie Inferior (apoyado sobre la servilleta verde)
+            const bottomBrownie = createSingleBrownie(2.26, 0.84, 2.26, 1.2);
+            bottomBrownie.position.set(0, 0.43, 0);
+            turntableGroup.add(bottomBrownie);
+
+            // Brownie Superior (apilado encima con un ligero giro natural como en la ilustración)
+            const topBrownie = createSingleBrownie(2.20, 0.84, 2.20, 7.8);
+            topBrownie.position.set(0.02, 1.24, -0.02);
+            topBrownie.rotation.y = THREE.MathUtils.degToRad(-7.5);
+            topBrownie.rotation.z = THREE.MathUtils.degToRad(1.2);
+            turntableGroup.add(topBrownie);
+
+            // ========================================================================
+            // 6. MIGAS DE BROWNIE ESPARCIDAS SOBRE LA SERVILLETA
+            // ========================================================================
+            function createScatteredCrumbs() {
+                const crumbsGroup = new THREE.Group();
+                const baseCrumbGeo = new THREE.DodecahedronGeometry(1, 0);
+
+                // Posiciones cuidadosamente distribuidas alrededor del brownie inferior (como en la imagen)
+                const crumbData = [
+                    { x: -1.32, z: 0.42, s: 0.095 }, // Miga grande izquierda
+                    { x: -1.16, z: 0.68, s: 0.048 }, // Miga pequeña izquierda
+                    { x: -0.28, z: 1.30, s: 0.056 }, // Miga frontal izquierda
+                    { x: -0.08, z: 1.38, s: 0.032 }, // Miga minúscula frontal
+                    { x: 0.68,  z: 1.22, s: 0.082 }, // Miga mediana frontal derecha
+                    { x: 0.92,  z: 0.98, s: 0.045 },
+                    { x: 1.28,  z: 0.20, s: 0.072 }, // Miga lateral derecha
+                    { x: 1.36,  z: -0.35, s: 0.038 },
+                    { x: -0.85, z: -1.24, s: 0.075 }, // Migas traseras para cuando gira 360°
+                    { x: 0.45,  z: -1.30, s: 0.062 },
+                    { x: 1.15,  z: -0.95, s: 0.050 }
+                ];
+
+                crumbData.forEach((c, idx) => {
+                    const mat = idx % 2 === 0 ? warmCrumbHighlightMat : chocoChunkMat;
+                    const mesh = new THREE.Mesh(baseCrumbGeo, mat);
+                    mesh.scale.set(c.s * 1.25, c.s * 0.82, c.s * 1.05);
+                    mesh.position.set(c.x, 0.045 + c.s * 0.35, c.z);
+                    mesh.rotation.set(idx * 1.1, idx * 2.3, idx * 0.7);
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    crumbsGroup.add(mesh);
+                });
+
+                return crumbsGroup;
+            }
+
+            turntableGroup.add(createScatteredCrumbs());
+
+            // ========================================================================
+            // 7. ELEMENTOS BOTÁNICOS Y ESTRELLAS FLOTANTES EN 3D ALREDEDOR DEL BROWNIE
+            // ========================================================================
+            const floatingAccents = [];
+
+            function createFloatingDecorations() {
+                const decoGroup = new THREE.Group();
+
+                // Materiales mate estilo ilustración
+                const leafSageMat = new THREE.MeshStandardMaterial({
+                    color: 0x5f7352,
+                    roughness: 0.75,
+                    side: THREE.DoubleSide
+                });
+                const leafDarkMat = new THREE.MeshStandardMaterial({
+                    color: 0x485a3d,
+                    roughness: 0.75,
+                    side: THREE.DoubleSide
+                });
+                const navyMat = new THREE.MeshStandardMaterial({
+                    color: 0x233647,
+                    roughness: 0.65
+                });
+
+                // Geometría extruida de hojita orgánica
+                function createLeafMesh(scale, useDark) {
+                    const shape = new THREE.Shape();
+                    shape.moveTo(0, -0.22);
+                    shape.quadraticCurveTo(0.14, -0.05, 0.0, 0.24);
+                    shape.quadraticCurveTo(-0.14, -0.05, 0, -0.22);
+
+                    const extrudeSettings = {
+                        depth: 0.018,
+                        bevelEnabled: true,
+                        bevelSegments: 2,
+                        steps: 1,
+                        bevelSize: 0.008,
+                        bevelThickness: 0.008
+                    };
+                    const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                    geo.center();
+                    const mesh = new THREE.Mesh(geo, useDark ? leafDarkMat : leafSageMat);
+                    mesh.scale.setScalar(scale);
+                    return mesh;
+                }
+
+                // Geometría de estrella de 5 o 6 puntas
+                function createStarMesh(points, outerR, innerR, mat) {
+                    const shape = new THREE.Shape();
+                    for (let i = 0; i < points * 2; i++) {
+                        const r = i % 2 === 0 ? outerR : innerR;
+                        const a = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+                        const x = Math.cos(a) * r;
+                        const y = Math.sin(a) * r;
+                        if (i === 0) shape.moveTo(x, y);
+                        else shape.lineTo(x, y);
+                    }
+                    shape.closePath();
+
+                    const geo = new THREE.ExtrudeGeometry(shape, {
+                        depth: 0.02,
+                        bevelEnabled: true,
+                        bevelSegments: 1,
+                        steps: 1,
+                        bevelSize: 0.006,
+                        bevelThickness: 0.006
+                    });
+                    geo.center();
+                    return new THREE.Mesh(geo, mat);
+                }
+
+                // Distribución 3D alrededor de los brownies (para que luzcan geniales desde cualquier ángulo)
+                const items = [
+                    // Hojas verdes
+                    { type: 'leaf', pos: [-1.75, 1.05, 0.45], rot: [0.2, 0.4, 0.65], scale: 0.85, dark: false },
+                    { type: 'leaf', pos: [-1.35, 1.95, -0.25], rot: [-0.2, 0.2, -0.45], scale: 0.72, dark: true },
+                    { type: 'leaf', pos: [1.22, 2.08, -0.35], rot: [0.1, -0.3, 0.15], scale: 0.62, dark: false },
+                    { type: 'leaf', pos: [1.72, 1.35, 0.30], rot: [0.3, 0.5, -0.6], scale: 0.75, dark: false },
+                    { type: 'leaf', pos: [0.25, 1.85, -1.65], rot: [-0.3, 1.2, 0.4], scale: 0.78, dark: true },
+                    { type: 'leaf', pos: [-0.45, 1.15, 1.75], rot: [0.2, -0.8, -0.5], scale: 0.68, dark: false },
+
+                    // Estrellitas verdes y azul marino
+                    { type: 'star5', pos: [-1.62, 1.65, 0.15], scale: 1.0, mat: leafSageMat },
+                    { type: 'star5', pos: [-1.68, 1.35, -0.30], scale: 0.72, mat: navyMat },
+                    { type: 'star6', pos: [0.85, 2.02, 0.25], scale: 0.92, mat: navyMat },
+                    { type: 'star5', pos: [1.62, 0.98, 0.45], scale: 0.95, mat: leafSageMat },
+                    { type: 'star5', pos: [-0.85, 1.95, -1.35], scale: 0.88, mat: navyMat },
+                    { type: 'star6', pos: [1.15, 1.55, -1.25], scale: 0.85, mat: leafSageMat }
+                ];
+
+                items.forEach((item, idx) => {
+                    let mesh;
+                    if (item.type === 'leaf') {
+                        mesh = createLeafMesh(item.scale, item.dark);
+                    } else if (item.type === 'star5') {
+                        mesh = createStarMesh(5, 0.11 * item.scale, 0.048 * item.scale, item.mat);
+                    } else {
+                        mesh = createStarMesh(6, 0.11 * item.scale, 0.042 * item.scale, item.mat);
+                    }
+
+                    mesh.position.set(item.pos[0], item.pos[1], item.pos[2]);
+                    if (item.rot) {
+                        mesh.rotation.set(item.rot[0], item.rot[1], item.rot[2]);
+                    }
+                    decoGroup.add(mesh);
+
+                    floatingAccents.push({
+                        mesh,
+                        baseY: item.pos[1],
+                        baseRotZ: mesh.rotation.z,
+                        phase: idx * 0.85,
+                        speed: 1.4 + (idx % 3) * 0.35
+                    });
+                });
+
+                // Pequeños puntitos flotantes (dots) en azul marino y verde salvia
+                const dotGeo = new THREE.SphereGeometry(0.032, 10, 10);
+                const dotCoords = [
+                    { pos: [-1.52, 1.92, 0.20], mat: leafSageMat },
+                    { pos: [-1.02, 1.96, 0.35], mat: navyMat },
+                    { pos: [-1.82, 1.50, 0.10], mat: leafSageMat },
+                    { pos: [-1.70, 0.82, 0.55], mat: leafSageMat },
+                    { pos: [-1.54, 0.72, 0.65], mat: navyMat },
+                    { pos: [0.58, 2.15, 0.15], mat: leafSageMat },
+                    { pos: [0.82, 2.22, -0.10], mat: leafSageMat },
+                    { pos: [1.65, 1.72, 0.12], mat: navyMat },
+                    { pos: [1.58, 1.58, 0.22], mat: leafSageMat },
+                    { pos: [1.85, 1.15, 0.25], mat: navyMat },
+                    { pos: [1.82, 0.85, 0.45], mat: leafSageMat },
+                    { pos: [0.15, 2.12, -1.45], mat: navyMat },
+                    { pos: [-1.25, 1.45, -1.25], mat: leafSageMat }
+                ];
+
+                dotCoords.forEach((d, idx) => {
+                    const dot = new THREE.Mesh(dotGeo, d.mat);
+                    dot.position.set(d.pos[0], d.pos[1], d.pos[2]);
+                    decoGroup.add(dot);
+                    floatingAccents.push({
+                        mesh: dot,
+                        baseY: d.pos[1],
+                        baseRotZ: 0,
+                        phase: idx * 1.1,
+                        speed: 1.8
+                    });
+                });
+
+                return decoGroup;
+            }
+
+            turntableGroup.add(createFloatingDecorations());
+
+            // ========================================================================
+            // 8. FÍSICAS DE ROTACIÓN HORIZONTAL E INERCIA AL ARRASTRAR Y SOLTAR
+            // ========================================================================
+            const physics = {
+                isDragging: false,
+                lastPointerX: 0,
+                lastMoveTime: performance.now(),
+                angularVelocity: config.baseSpeed, // rad/s actuales
+                spinDirection: 1,                  // 1 (derecha) o -1 (izquierda)
+                pointerSamples: []                 // Historial reciente para calcular velocidad de lanzamiento suave
+            };
+
+            function onPointerDown(e) {
+                // Ignorar clics si provienen de controles UI superpuestos
+                if (e.target !== renderer.domElement) return;
+
+                physics.isDragging = true;
+                physics.lastPointerX = e.clientX;
+                physics.lastMoveTime = performance.now();
+                physics.pointerSamples = [];
+
+                if (renderer.domElement.setPointerCapture && e.pointerId !== undefined) {
+                    try { renderer.domElement.setPointerCapture(e.pointerId); } catch (_) {}
+                }
+            }
+
+            function onPointerMove(e) {
+                if (!physics.isDragging) return;
+
+                const now = performance.now();
+                const deltaX = e.clientX - physics.lastPointerX;
+                const dtMs = Math.max(1, now - physics.lastMoveTime);
+
+                physics.lastPointerX = e.clientX;
+                physics.lastMoveTime = now;
+
+                // Convertir píxeles horizontales a radianes (solo eje Y horizontal)
+                const radPerPixel = (Math.PI * 2.1 / Math.max(320, container.clientWidth)) * config.dragSensitivity;
+                const deltaAngle = deltaX * radPerPixel;
+
+                // Aplicar rotación inmediata siguiendo el mouse
+                turntableGroup.rotation.y += deltaAngle;
+
+                // Velocidad instantánea en rad/s
+                const instantVel = deltaAngle / (dtMs / 1000);
+
+                physics.pointerSamples.push({ vel: instantVel, time: now });
+                // Mantener solo muestras de los últimos 90ms
+                while (physics.pointerSamples.length > 0 && now - physics.pointerSamples[0].time > 90) {
+                    physics.pointerSamples.shift();
+                }
+
+                physics.angularVelocity = instantVel;
+                if (Math.abs(deltaX) > 0.5) {
+                    physics.spinDirection = deltaX >= 0 ? 1 : -1;
+                }
+            }
+
+            function onPointerUp(e) {
+                if (!physics.isDragging) return;
+                physics.isDragging = false;
+
+                const now = performance.now();
+                // Si el usuario dejó el mouse quieto antes de soltar (> 85ms sin mover),
+                // arranca desde una velocidad baja y retoma suavemente la velocidad constante.
+                // Si lanzó el gesto (flick/drag & release), conserva la velocidad rápida del mouse.
+                const validSamples = physics.pointerSamples.filter(s => now - s.time <= 95);
+
+                if (validSamples.length > 0) {
+                    let sumVel = 0;
+                    validSamples.forEach(s => { sumVel += s.vel; });
+                    const avgLaunchVel = sumVel / validSamples.length;
+
+                    // Limitar velocidad máxima a un rango agradable pero enérgico
+                    const maxThrowSpeed = 16.0;
+                    physics.angularVelocity = THREE.MathUtils.clamp(avgLaunchVel, -maxThrowSpeed, maxThrowSpeed);
+
+                    if (Math.abs(physics.angularVelocity) > 0.15) {
+                        physics.spinDirection = physics.angularVelocity >= 0 ? 1 : -1;
+                    }
+                } else {
+                    // Soltó sin impulso: retoma suavemente el giro constante
+                    physics.angularVelocity = physics.spinDirection * config.baseSpeed;
+                }
+            }
+
+            renderer.domElement.addEventListener('pointerdown', onPointerDown);
+            window.addEventListener('pointermove', onPointerMove);
+            window.addEventListener('pointerup', onPointerUp);
+            window.addEventListener('pointercancel', onPointerUp);
+
+            // Manejo de redimensionamiento responsivo
+            function onWindowResize() {
+                if (!container) return;
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                camera.aspect = w / Math.max(1, h);
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+                updateCameraPosition();
+            }
+            window.addEventListener('resize', onWindowResize);
+
+            // 9. Bucle de Animación y Desaceleración hacia Velocidad Constante
+            let lastFrameTime = performance.now();
+            let elapsedTime = 0;
+            let animationFrameId = null;
+
+            function animate(now) {
+                animationFrameId = requestAnimationFrame(animate);
+
+                const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+                lastFrameTime = now;
+                elapsedTime += dt;
+
+                if (!physics.isDragging) {
+                    // Velocidad constante objetivo en la dirección del último giro
+                    const targetConstantVel = physics.spinDirection * config.baseSpeed;
+
+                    // Interpolación exponencial libre de framerate:
+                    // Primero gira rápido con la inercia del mouse y desacelera suavemente
+                    // hasta estabilizarse exactamente en `targetConstantVel`.
+                    const decay = 1 - Math.exp(-config.damping * dt);
+                    physics.angularVelocity += (targetConstantVel - physics.angularVelocity) * decay;
+
+                    // Aplicar rotación horizontal (únicamente eje Y)
+                    turntableGroup.rotation.y += physics.angularVelocity * dt;
+                }
+
+                // Animación flotante sutil de las hojitas, estrellas y puntos 3D
+                for (let i = 0; i < floatingAccents.length; i++) {
+                    const item = floatingAccents[i];
+                    item.mesh.position.y = item.baseY + Math.sin(elapsedTime * item.speed + item.phase) * 0.045;
+                    if (item.baseRotZ !== 0) {
+                        item.mesh.rotation.z = item.baseRotZ + Math.cos(elapsedTime * (item.speed * 0.8) + item.phase) * 0.08;
+                    }
+                }
+
+                renderer.render(scene, camera);
+
+                // Callback opcional para actualizar la UI de estado
+                if (typeof config.onUpdateStatus === 'function') {
+                    config.onUpdateStatus({
+                        isDragging: physics.isDragging,
+                        angularVelocity: physics.angularVelocity,
+                        targetVelocity: physics.spinDirection * config.baseSpeed
+                    });
+                }
+            }
+
+            // Iniciar bucle en window.onload o inmediatamente si ya cargó
+            animate(performance.now());
+
+            return {
+                config,
+                physics,
+                scene,
+                camera,
+                renderer,
+                resize: onWindowResize,
+                destroy() {
+                    cancelAnimationFrame(animationFrameId);
+                    window.removeEventListener('resize', onWindowResize);
+                    window.removeEventListener('pointermove', onPointerMove);
+                    window.removeEventListener('pointerup', onPointerUp);
+                    window.removeEventListener('pointercancel', onPointerUp);
+                    renderer.dispose();
+                }
+            };
+        }
+
+// Montar en tu contenedor:
+const contenedor = document.getElementById('mis-brownies-3d');
+const brownies3D = mountBrownies3D(contenedor, {
+    baseSpeed: 0.0,       // Velocidad constante final (rad/s)
+    damping: 2.6,          // Fricción / desaceleración tras soltar
+    dragSensitivity: 1,  // Sensibilidad del arrastre con mouse/touch
+    cameraElevationDeg: 28,
+    cameraDistance: 9
+});
+</script>
+</body>
+</html>
